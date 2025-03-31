@@ -62,11 +62,6 @@ class TaskController extends Controller
                 ], 404);
             }
             return response()->json($task);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Task not found.',
-                'error' => $e->getMessage(),
-            ], 404);
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 'message' => 'Database error occurred while loading the task.',
@@ -79,50 +74,6 @@ class TaskController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Task $task, Request $request)
-    {
-        try {
-            if(!$task) {
-                return response()->json([
-                    'message' => 'Task not found.',
-                ], 404);
-            }
-            $data = $request->validate([
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'project_id' => 'required|exists:projects,id',
-                'user_id' => 'required|exists:users,id',
-                'status' => 'required|string|in:pending,completed,in-progress',
-            ]);
-            $task->update([
-                'name' => $data['name'],
-                'description' => $data['description'] ?? null,
-                'user_id' => $data['user_id'],
-                'status' => $data['status'],
-            ]);
-            return response()->json($task);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Task not found.',
-                'error' => $e->getMessage(),
-            ], 404);
-        } catch (\Illuminate\Database\QueryException $e) {
-            return response()->json([
-                'message' => 'Database error occurred while loading the task.',
-                'error' => $e->getMessage(),
-            ], 500);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while loading the task.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
     /**
      * Update the specified resource in storage.
      */
@@ -178,9 +129,7 @@ class TaskController extends Controller
                 ], 404);
             }
             $task->delete();
-            return response()->json([
-                'message' => 'Task deleted successfully.',
-            ]);
+            return response()->noContent();
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 'message' => 'Database error occurred while loading the task.',
