@@ -4,23 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class ProjectController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Project $project): JsonResponse
     {
-        //
+        return response()->json($project->with('tasks')->get());
     }
-
     /**
-     * Show the form for creating a new resource.
+     * Form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        
     }
 
     /**
@@ -28,7 +28,32 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'status' => 'required|string|in:pending,completed,in-progress',
+            ]);
+
+            $project = Project::create([
+                'name' => $validatedData['name'],
+                'description' => $validatedData['description'] ?? null,
+                'status' => $validatedData['status'],
+            ]);
+
+            return response()->json($project, 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while creating the project.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
