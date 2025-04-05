@@ -152,7 +152,15 @@ class ProjectController extends Controller
     public function addUser(User $user, Project $project)
     {
         try {
+            if($project->users()->where('user_id', $user->id)->exists()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User already exists in the project',
+                ], 422);
+            }
             $project->users()->attach($user->id);
+            $project->save();
+
             return response()->json([
                 'status' => true,
                 'message' => 'User added to project successfully',
@@ -175,7 +183,14 @@ class ProjectController extends Controller
     public function removeUser(User $user, Project $project)
     {
         try {
+            if(!$project->users()->where('user_id', $user->id)->exists()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User does not exist in the project',
+                ], 422);
+            }
             $project->users()->detach($user->id);
+            $project->save();
             return response()->json([
                 'status' => true,
                 'message' => 'User removed from project successfully',

@@ -13,9 +13,9 @@ Route::group(['prefix' => 'project', 'middleware' => 'auth:sanctum'], function()
     Route::get('/list', [ProjectController::class, 'index']); //Listar Proyectos
     Route::get('/show/{project}', [ProjectController::class, 'show']); //Mostrar Proyecto
     Route::get('/add-user/{user}/{project}', [ProjectController::class, 'addUser']); //Agregar Usuario a Proyecto
-    Route::get('/remove-user/{user}/{project}', [ProjectController::class, 'removeUser']); //Eliminar Usuario de Proyecto
     Route::post('/store', [ProjectController::class, 'store']); //Crear Proyecto
     Route::put('/update', [ProjectController::class, 'update']); //Actualizar Proyecto
+    Route::delete('/remove-user/{user}/{project}', [ProjectController::class, 'removeUser']); //Eliminar Usuario de Proyecto
     Route::delete('/destroy/{project}', [ProjectController::class, 'destroy']); //Eliminar Proyecto
 });
 
