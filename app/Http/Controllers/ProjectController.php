@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -11,30 +12,46 @@ class ProjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Project $project): JsonResponse
+    public function index(): JsonResponse
     {
-        return response()->json(Project::all());
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'not authenticated',
+                ], 422);
+            }
+            $projects = $user->projects()->with('tasks')->with('users')->get();
+            return response()->json($projects, 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Database error occurred while loading projects.',
+                'error' => $e->getMessage(),
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while loading projects.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         try {
-            $validatedData = $request->validate([
+            $data = $request->validate([
                 'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'status' => 'required|string|in:pending,completed,in-progress',
             ]);
 
             $project = Project::create([
-                'name' => $validatedData['name'],
-                'description' => $validatedData['description'] ?? null,
-                'status' => $validatedData['status'],
+                'name' => $data['name'],
             ]);
+            $project->users()->attach(auth()->user()->id);
+            $project->save();
 
             return response()->json($project, 201);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
@@ -54,12 +71,12 @@ class ProjectController extends Controller
     public function show(Project $project)
     {
         try {
-            if (!$project) {
-                return response()->json([
-                    'message' => 'Project not found',
-                ], 404);
-            }
-            return response()->json($project->with('tasks')->with('users')->get());
+            $project->load('tasks', 'users');
+            return response()->json([
+                'status' => true,
+                'message' => 'Project loaded successfully',
+                'data' => $project
+            ], 200);
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 'message' => 'Database error occurred while loading the project.',
@@ -70,30 +87,37 @@ class ProjectController extends Controller
                 'message' => 'An error occurred while loading the project.',
                 'error' => $e->getMessage(),
             ], 500);
-        }  
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Project $project)
+    public function update(Request $request)
     {
         try {
-            $validatedData = $request->validate([
+            $data = $request->validate([
+                'id' => 'required|integer|exists:projects,id',
                 'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'status' => 'required|string|in:pending,completed,in-progress',
             ]);
-
-            $project->update($validatedData);
-
+            $project = Project::findOrFail($data['id']);
+            $project->name = $data['name'];
+            $project->save();
             return response()->json($project, 200);
-
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Project not found',
+            ], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
                 'errors' => $e->errors(),
             ], 422);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Database error occurred while updating the project.',
+                'error' => $e->getMessage(),
+            ], 500);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while updating the project.',
@@ -107,11 +131,6 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
-        if (!$project) {
-            return response()->json([
-                'message' => 'Project not found',
-            ], 404);
-        }
         try {
             $project->delete();
             return response()->noContent();
@@ -123,6 +142,52 @@ class ProjectController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while deleting the project.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    /**
+     * Add a user to the project.
+     */
+    public function addUser(User $user, Project $project)
+    {
+        try {
+            $project->users()->attach($user->id);
+            return response()->json([
+                'status' => true,
+                'message' => 'User added to project successfully',
+            ], 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Database error occurred while adding the user to the project.',
+                'error' => $e->getMessage(),
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while adding the user to the project.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    /**
+     * Remove a user from the project.
+     */
+    public function removeUser(User $user, Project $project)
+    {
+        try {
+            $project->users()->detach($user->id);
+            return response()->json([
+                'status' => true,
+                'message' => 'User removed from project successfully',
+            ], 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Database error occurred while removing the user from the project.',
+                'error' => $e->getMessage(),
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while removing the user from the project.',
                 'error' => $e->getMessage(),
             ], 500);
         }

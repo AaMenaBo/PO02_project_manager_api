@@ -6,8 +6,6 @@ class Project extends BaseModel
 {
     protected $fillable = [
         'name',
-        'description',
-        'status',
     ];
 
     public function tasks()
