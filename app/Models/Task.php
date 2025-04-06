@@ -2,8 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 class Task extends BaseModel
 {
+    private const STATUS_TABLE = [
+        'pending' => 1,
+        'completed' => 2,
+        'in-progress' => 3,
+    ];
     protected $fillable = [
         'description',
         'status',
@@ -19,5 +26,13 @@ class Task extends BaseModel
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    protected function status(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => array_flip(self::STATUS_TABLE)[$value] ?? null,
+            set: fn ($value) => self::STATUS_TABLE[$value] ?? null,
+        );
     }
 }

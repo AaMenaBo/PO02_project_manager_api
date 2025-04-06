@@ -13,7 +13,8 @@ class TaskController extends Controller
      */
     public function index($projectId)
     {
-        return response()->json(Task::where('project_id', $projectId)->with('user')->get());
+        $response = Task::where('project_id', $projectId)->with('user')->with('project')->get();
+        return response()->json($response);
     }
 
     /**
@@ -24,7 +25,7 @@ class TaskController extends Controller
         try {
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
+                'description' => 'required|nullable|string',
                 'project_id' => 'required|exists:projects,id',
                 'user_id' => 'required|exists:users,id',
                 'status' => 'required|string|in:pending,completed,in-progress',
@@ -34,9 +35,21 @@ class TaskController extends Controller
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'] ?? null,
                 'user_id' => $validatedData['user_id'],
+                'status' => $validatedData['status'],
             ]);
 
-            return response()->json($task, 201);
+            return response()->json([
+                'status' => true,
+                'message' => 'Task created successfully.',
+                'data' => [
+                    'id' => $task->id,
+                    'name' => $task->name,
+                    'description' => $task->description,
+                    'user_id' => $task->user,
+                    'project_id' => $task->project,
+                    'status' => Task::getStatusText($task->status),
+                ],
+            ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
@@ -61,7 +74,18 @@ class TaskController extends Controller
                     'message' => 'Task not found.',
                 ], 404);
             }
-            return response()->json($task);
+            return response()->json([
+                'status' => true,
+                'message' => 'Task loaded successfully.',
+                'data' => [
+                    'id' => $task->id,
+                    'name' => $task->name,
+                    'description' => $task->description,
+                    'user_id' => $task->user,
+                    'project_id' => $task->project,
+                    'status' => $task->status,
+                ],
+            ],200);
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 'message' => 'Database error occurred while loading the task.',
@@ -77,21 +101,19 @@ class TaskController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Task $task)
+    public function update(Request $request)
     {
         try {
-            if(!$task) {
-                return response()->json([
-                    'message' => 'Task not found.',
-                ], 404);
-            }
             $data = $request->validate([
+                'id' => 'required|exists:tasks,id',
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'project_id' => 'required|exists:projects,id',
                 'user_id' => 'required|exists:users,id',
                 'status' => 'required|string|in:pending,completed,in-progress',
             ]);
+
+            $task = Task::find($data['id']);
             $task->update([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
@@ -99,11 +121,11 @@ class TaskController extends Controller
                 'status' => $data['status'],
             ]);
             return response()->json($task);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'message' => 'Task not found.',
-                'error' => $e->getMessage(),
-            ], 404);
+                'message' => 'Validation Error',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 'message' => 'Database error occurred while loading the task.',
