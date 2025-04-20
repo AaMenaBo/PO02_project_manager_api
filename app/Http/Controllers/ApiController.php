@@ -107,6 +107,8 @@ class ApiController extends Controller
                 'name' => $userdata->name,
                 'email' => $userdata->email,
                 'onesignal_id' => $userdata->onesignal_id,
+                'projects' => $userdata->projects,
+                'tasks' => $userdata->tasks,
             ],
         ], 200);
     }
