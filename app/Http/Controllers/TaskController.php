@@ -47,7 +47,7 @@ class TaskController extends Controller
                     'description' => $task->description,
                     'user_id' => $task->user,
                     'project_id' => $task->project,
-                    'status' => Task::getStatusText($task->status),
+                    'status' => $task->status,
                 ],
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
