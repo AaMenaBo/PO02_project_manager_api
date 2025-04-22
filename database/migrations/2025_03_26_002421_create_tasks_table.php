@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
+            $table->text('name');
             $table->text('description');
             $table->text('status');
             $table->foreignIdFor(User::class)->nullable()->constrained()->onDelete('set null');
