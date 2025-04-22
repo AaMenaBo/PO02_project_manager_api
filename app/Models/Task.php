@@ -12,6 +12,7 @@ class Task extends BaseModel
         'in-progress' => 3,
     ];
     protected $fillable = [
+        'name',
         'description',
         'status',
         'user_id',
