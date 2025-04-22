@@ -11,6 +11,7 @@ class Task extends BaseModel
         'completed' => 2,
         'in-progress' => 3,
     ];
+    // The table name
     protected $fillable = [
         'name',
         'description',
