@@ -123,11 +123,29 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /**
+     * The 'providers' array in the application configuration file is used to register
+     * service providers for the application. In this case, the OneSignalServiceProvider
+     * is being added to the list of providers. This service provider integrates the 
+     * OneSignal push notification service into the application, allowing the application 
+     * to send push notifications to users.
+     *
+     * @see https://github.com/berkayk/laravel-onesignal
+     */
     'providers' => [
         // ...
         Berkayk\OneSignal\OneSignalServiceProvider::class
     ],
 
+    /**
+     * The 'aliases' array in the application configuration file is used to create
+     * "facades" for the application. Facades provide a static interface to classes
+     * that are available in the application's service container. In this case, 
+     * the OneSignal facade is being added to the list of aliases. This allows 
+     * developers to use a simple static interface to interact with the OneSignal 
+     * service.
+     *
+     **/
     'aliases' => [
         // ...
         'OneSignal' => Berkayk\OneSignal\OneSignalFacade::class
