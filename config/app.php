@@ -123,14 +123,4 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-    'providers' => [
-        // ...
-        Berkayk\OneSignal\OneSignalServiceProvider::class
-    ],
-
-    'aliases' => [
-        // ...
-        'OneSignal' => Berkayk\OneSignal\OneSignalFacade::class
-    ]
-
 ];
